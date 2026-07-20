@@ -23,7 +23,7 @@ function Dashboard() {
 
     async function fetchCandidates() {
         try {
-            const res = await fetch("import.meta.env.VITE_API_URL/api/candidates");
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/candidates`);
             const data = await res.json();
             setCandidates(Array.isArray(data) ? data : []);
         } catch (err) {
@@ -45,7 +45,7 @@ function Dashboard() {
 
         try {
             const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/invite?email=${inviteEmail}`,
+                `import.meta.env.VITE_API_URL/invite?email=${inviteEmail}`,
                 { method: "POST" }
             );
             const data = await response.json();
