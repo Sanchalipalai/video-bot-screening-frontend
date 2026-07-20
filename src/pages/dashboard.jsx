@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import ScreeningModal from "../components/ScreeningModal";
-const API_URL = import.meta.env.VITE_API_URL;
 import {
     FaUsers,
     FaClipboardList,
@@ -10,6 +9,8 @@ import {
     FaCog,
     FaSignOutAlt
 } from "react-icons/fa";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 function Dashboard() {
     const [candidates, setCandidates] = useState([]);
@@ -23,7 +24,7 @@ function Dashboard() {
 
     async function fetchCandidates() {
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/candidates`);
+            const res = await fetch(`${API_URL}/api/candidates`);
             const data = await res.json();
             setCandidates(Array.isArray(data) ? data : []);
         } catch (err) {
@@ -43,58 +44,47 @@ function Dashboard() {
             return;
         }
 
-       const API_URL = import.meta.env.VITE_API_URL;
+        try {
+            const response = await fetch(
+                `${API_URL}/invite?email=${inviteEmail}`,
+                {
+                    method: "POST"
+                }
+            );
 
-async function inviteCandidate() {
+            const data = await response.json();
 
-    try {
-        const response = await fetch(
-            `${API_URL}/invite?email=${inviteEmail}`,
-            {
-                method: "POST"
+            if (response.ok) {
+                alert("Candidate invited successfully");
+                setInviteLink(data.interview_link);
+                setInviteEmail("");
+                fetchCandidates();
+            } else {
+                alert(data.detail);
             }
-        );
-
-        const data = await response.json();
-
-        if (response.ok) {
-            alert("Candidate invited successfully");
-            setInviteLink(data.interview_link);
-            setInviteEmail("");
-            fetchCandidates();
-        } else {
-            alert(data.detail);
+        } catch (error) {
+            console.log(error);
+            alert("Backend not connected");
         }
-
-    } catch (error) {
-        console.log(error);
-        alert("Backend not connected");
     }
-}
 
+    async function deleteCandidate(id) {
+        const confirmDelete = window.confirm("Delete this candidate?");
+        if (!confirmDelete) return;
 
-async function deleteCandidate(id) {
-
-    const confirmDelete = window.confirm("Delete this candidate?");
-    if (!confirmDelete) return;
-
-    try {
-        const res = await fetch(
-            `${API_URL}/candidates/${id}`,
-            {
+        try {
+            const res = await fetch(`${API_URL}/candidates/${id}`, {
                 method: "DELETE"
+            });
+
+            if (res.ok) {
+                alert("Candidate deleted");
+                fetchCandidates();
             }
-        );
-
-        if (res.ok) {
-            alert("Candidate deleted");
-            fetchCandidates();
+        } catch (err) {
+            console.log(err);
         }
-
-    } catch (err) {
-        console.log(err);
     }
-}
 
     const getStatusStyle = (status) => {
         const base = {
@@ -441,11 +431,14 @@ function SidebarItem({ icon, text, active, onClick }) {
 function DashboardCard({ title, text }) {
     return (
         <div style={{ background: "white", padding: "30px", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
-            <h2 style={{ margin: "0 0 10px 0", fontSize: "1.4rem", fontWeight: "700" }}>{title}</h2>
-            <p style={{ color: "#64748b", margin: 0 }}>{text}</p>
+            <h2 style={{ margin: "0 0 10px 0", fontSize: "1.4rem", fontWeight: "700" }}>
+                {title}
+            </h2>
+            <p style={{ color: "#64748b", margin: 0 }}>
+                {text}
+            </p>
         </div>
     );
 }
 
 export default Dashboard;
-}
