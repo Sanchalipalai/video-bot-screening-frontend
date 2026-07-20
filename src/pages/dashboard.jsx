@@ -23,7 +23,7 @@ function Dashboard() {
 
     async function fetchCandidates() {
         try {
-            const res = await fetch("http://127.0.0.1:8000/api/candidates");
+            const res = await fetch("import.meta.env.VITE_API_URL/api/candidates");
             const data = await res.json();
             setCandidates(Array.isArray(data) ? data : []);
         } catch (err) {
@@ -45,7 +45,7 @@ function Dashboard() {
 
         try {
             const response = await fetch(
-                `http://127.0.0.1:8000/invite?email=${inviteEmail}`,
+                `import.meta.env.VITE_API_URL/invite?email=${inviteEmail}`,
                 { method: "POST" }
             );
             const data = await response.json();
@@ -69,7 +69,7 @@ function Dashboard() {
         if (!confirmDelete) return;
 
         try {
-            const res = await fetch(`http://127.0.0.1:8000/candidates/${id}`, {
+            const res = await fetch(`import.meta.env.VITE_API_URL/candidates/${id}`, {
                 method: "DELETE"
             });
             if (res.ok) {
