@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import ScreeningModal from "../components/ScreeningModal";
-
+const API_URL = import.meta.env.VITE_API_URL;
 import {
     FaUsers,
     FaClipboardList,
@@ -43,43 +43,58 @@ function Dashboard() {
             return;
         }
 
-        try {
-            const response = await fetch(
-                `import.meta.env.VITE_API_URL/invite?email=${inviteEmail}`,
-                { method: "POST" }
-            );
-            const data = await response.json();
+       const API_URL = import.meta.env.VITE_API_URL;
 
-            if (response.ok) {
-                alert("Candidate invited successfully");
-                setInviteLink(data.interview_link);
-                setInviteEmail("");
-                fetchCandidates();
-            } else {
-                alert(data.detail);
+async function inviteCandidate() {
+
+    try {
+        const response = await fetch(
+            `${API_URL}/invite?email=${inviteEmail}`,
+            {
+                method: "POST"
             }
-        } catch (error) {
-            console.log(error);
-            alert("Backend not connected");
+        );
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert("Candidate invited successfully");
+            setInviteLink(data.interview_link);
+            setInviteEmail("");
+            fetchCandidates();
+        } else {
+            alert(data.detail);
         }
+
+    } catch (error) {
+        console.log(error);
+        alert("Backend not connected");
     }
+}
 
-    async function deleteCandidate(id) {
-        const confirmDelete = window.confirm("Delete this candidate?");
-        if (!confirmDelete) return;
 
-        try {
-            const res = await fetch(`import.meta.env.VITE_API_URL/candidates/${id}`, {
+async function deleteCandidate(id) {
+
+    const confirmDelete = window.confirm("Delete this candidate?");
+    if (!confirmDelete) return;
+
+    try {
+        const res = await fetch(
+            `${API_URL}/candidates/${id}`,
+            {
                 method: "DELETE"
-            });
-            if (res.ok) {
-                alert("Candidate deleted");
-                fetchCandidates();
             }
-        } catch (err) {
-            console.log(err);
+        );
+
+        if (res.ok) {
+            alert("Candidate deleted");
+            fetchCandidates();
         }
+
+    } catch (err) {
+        console.log(err);
     }
+}
 
     const getStatusStyle = (status) => {
         const base = {
