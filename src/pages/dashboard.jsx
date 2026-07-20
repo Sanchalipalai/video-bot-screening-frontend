@@ -448,3 +448,4 @@ function DashboardCard({ title, text }) {
 }
 
 export default Dashboard;
+}
