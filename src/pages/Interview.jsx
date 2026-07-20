@@ -69,18 +69,18 @@ function Interview() {
         console.log("Final answers:", answers);
 
         await fetch(
-            "http://127.0.0.1:8000/api/submit-interview",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    candidate_id: id,
-                    answers: answers
-                })
-            }
-        );
+    `${import.meta.env.VITE_API_URL}/api/submit-interview`,
+    {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            candidate_id: id,
+            answers: answers
+        })
+    }
+);
 
         alert("Interview Submitted");
     }

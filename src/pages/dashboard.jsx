@@ -45,7 +45,7 @@ function Dashboard() {
 
         try {
             const response = await fetch(
-                `import.meta.env.VITE_API_URL/invite?email=${inviteEmail}`,
+                `${import.meta.env.VITE_API_URL}/invite?email=${inviteEmail}`,
                 { method: "POST" }
             );
             const data = await response.json();

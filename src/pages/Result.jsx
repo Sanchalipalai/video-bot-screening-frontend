@@ -8,10 +8,10 @@ const [data,setData]=useState(null);
 
 useEffect(()=>{
 
-fetch(
-"http://127.0.0.1:8000/api/analyze-video?filename=candidate_video.webm",
+ffetch(
+`${import.meta.env.VITE_API_URL}/api/analyze-video?filename=candidate_video.webm`,
 {
-method:"POST"
+    method: "POST"
 }
 )
 .then(res=>res.json())
