@@ -7,9 +7,7 @@ export async function getCandidates() {
         `${API_URL}/api/candidates`
     );
 
-    return await response.json();
 }
-
 
 export async function uploadVideo(file) {
 
