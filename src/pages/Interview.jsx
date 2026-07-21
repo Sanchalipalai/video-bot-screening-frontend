@@ -65,25 +65,28 @@ function Interview() {
     ]);
 
 }
-    async function submitInterview() {
-        console.log("Final answers:", answers);
+async function submitInterview() {
 
-        await fetch(
-    `${import.meta.env.VITE_API_URL}/api/submit-interview`,
-    {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            candidate_id: id,
-            answers: answers
-        })
-    }
-);
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-        alert("Interview Submitted");
-    }
+    console.log("Final answers:", answers);
+
+    await fetch(
+        `${import.meta.env.VITE_API_URL}/api/submit-interview`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                candidate_id: id,
+                answers: answers
+            })
+        }
+    );
+
+    alert("Interview Submitted");
+}
 
     return (
         <div
