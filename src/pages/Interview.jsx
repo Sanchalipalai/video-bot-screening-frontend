@@ -39,20 +39,27 @@ function Interview() {
     }, [current]); // Fires automatically whenever the 'current' question index changes
     // ------------------------------------------
 
-   function saveVideo(data) {
+function saveVideo(data) {
 
     if(!data.video_url){
         console.log("No video URL received");
         return;
     }
 
-    setAnswers(prev => [
-        ...prev,
-        {
-            question: questions[current],
-            video_url: data.video_url
-        }
-    ]);
+    setAnswers(prev => {
+
+        const filtered = prev.filter(
+            item => item.question !== questions[current]
+        );
+
+        return [
+            ...filtered,
+            {
+                question: questions[current],
+                video_url: data.video_url
+            }
+        ];
+    });
 
 }
 async function submitInterview() {
@@ -70,7 +77,7 @@ async function submitInterview() {
             },
             body: JSON.stringify({
                 candidate_id: id,
-                answers: answers
+                answers: answers.slice(0, 3)
             })
         }
     );
