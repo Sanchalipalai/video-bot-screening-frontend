@@ -41,27 +41,17 @@ function Interview() {
 
    function saveVideo(data) {
 
-    console.log(
-        "Saved video:",
-        data
-    );
-
-
     if(!data.video_url){
         console.log("No video URL received");
         return;
     }
 
-
     setAnswers(prev => [
-
         ...prev,
-
         {
             question: questions[current],
             video_url: data.video_url
         }
-
     ]);
 
 }
