@@ -1,227 +1,145 @@
 import React, { useRef, useState } from "react";
+import { supabase } from "../supabaseClient";
 
-function VideoRecorder({
-    onUploaded,
-    questionNumber,
-    candidateId
-}) {
+function VideoRecorder({ onUploaded, questionNumber, candidateId }) {
+  const videoRef = useRef(null);
+  const recorderRef = useRef(null);
+  const chunksRef = useRef([]);
 
-    const videoRef = useRef(null);
-    const recorderRef = useRef(null);
-    const chunksRef = useRef([]);
+  const [stream, setStream] = useState(null);
+  const [recording, setRecording] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
-    const [stream, setStream] = useState(null);
-    const [recording, setRecording] = useState(false);
+  async function startRecording() {
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
 
+      setStream(mediaStream);
 
-    async function startRecording() {
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+      }
 
+      const recorder = new MediaRecorder(mediaStream, {
+        mimeType: "video/webm",
+      });
+
+      recorderRef.current = recorder;
+      chunksRef.current = [];
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunksRef.current.push(event.data);
+        }
+      };
+
+      recorder.onstop = async () => {
+        setUploading(true);
         try {
+          const blob = new Blob(chunksRef.current, { type: "video/webm" });
+          console.log("Video size:", blob.size);
 
-            const mediaStream =
-                await navigator.mediaDevices.getUserMedia({
-                    video: true,
-                    audio: true
-                });
+          const fileName = `candidate_${candidateId}/question_${questionNumber}_${Date.now()}.webm`;
+          console.log("Uploading:", fileName);
 
+          // 1. Upload to Supabase Storage
+          const { data, error } = await supabase.storage
+            .from("interview-videos")
+            .upload(fileName, blob, { contentType: "video/webm" });
 
-            setStream(mediaStream);
-
-
-            videoRef.current.srcObject = mediaStream;
-
-
-            const recorder =
-                new MediaRecorder(
-                    mediaStream,
-                    {
-                        mimeType: "video/webm"
-                    }
-                );
-
-
-            recorderRef.current = recorder;
-
-            chunksRef.current = [];
-
-
-            recorder.ondataavailable = (event)=>{
-
-                if(event.data.size > 0){
-                    chunksRef.current.push(event.data);
-                }
-
-            };
-
-
-            recorder.onstop = async ()=>{
-
-
-                const blob =
-                    new Blob(
-                        chunksRef.current,
-                        {
-                            type:"video/webm"
-                        }
-                    );
-
-
-                console.log(
-                    "Video size:",
-                    blob.size
-                );
-
-
-                const formData =
-                    new FormData();
-
-
-                formData.append(
-                    "video",
-                    blob,
-                    `question_${questionNumber}_${Date.now()}.webm`
-                );
-
-
-                formData.append(
-                    "question",
-                    `Question ${questionNumber + 1}`
-                );
-
-
-for (let pair of formData.entries()) {
-    console.log(pair[0], pair[1]);
-}
-                const response =
-                    await fetch(
-                        `http://127.0.0.1:8000/api/upload-interview/${candidateId}`,
-                        {
-                            method:"POST",
-                            body:formData
-                        }
-                    );
-
-
-                const data =
-                    await response.json();
-
-
-                console.log(
-                    "Upload result:",
-                    data
-                );
-
-
-                if(onUploaded){
-                    onUploaded(data);
-                }
-
-
-            };
-
-
-            recorder.start();
-
-
-            setRecording(true);
-
-
-        }
-        catch(error){
-
-            console.log(error);
-
-            alert(
-                "Camera permission denied"
-            );
-
-        }
-
-    }
-
-
-
-    function stopRecording(){
-
-
-        if(!recorderRef.current)
+          if (error) {
+            console.error("Supabase upload error:", error);
+            alert("Video upload failed");
             return;
+          }
 
+          console.log("Supabase upload success:", data);
 
+          const { data: urlData } = supabase.storage
+            .from("interview-videos")
+            .getPublicUrl(fileName);
 
-        recorderRef.current.stop();
+          const videoUrl = urlData.publicUrl;
+          console.log("Video URL:", videoUrl);
 
+          // 2. Upload to custom backend server
+          const formData = new FormData();
+          formData.append("video", blob, fileName);
+          formData.append("question", `Question ${questionNumber + 1}`);
 
-        if(stream){
+          const response = await fetch(
+            `${import.meta.env.VITE_API_URL}/api/upload-interview/${candidateId}`,
+            {
+              method: "POST",
+              body: formData,
+            }
+          );
 
-            stream
-            .getTracks()
-            .forEach(
-                track=>track.stop()
-            );
+          const result = await response.json();
+          console.log("Backend upload result:", result);
 
+          if (onUploaded) {
+            onUploaded(result);
+          }
+        } catch (err) {
+          console.error("Error during upload process:", err);
+          alert("An error occurred during upload.");
+        } finally {
+          setUploading(false);
         }
+      };
 
+      recorder.start();
+      setRecording(true);
+    } catch (error) {
+      console.error("Camera access error:", error);
+      alert("Camera permission denied or device not found.");
+    }
+  }
 
-        setRecording(false);
-
+  function stopRecording() {
+    if (recorderRef.current && recorderRef.current.state !== "inactive") {
+      recorderRef.current.stop();
     }
 
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      setStream(null);
+    }
 
+    setRecording(false);
+  }
 
-    return (
+  return (
+    <div>
+      <video
+        ref={videoRef}
+        autoPlay
+        muted
+        playsInline
+        width="500"
+        style={{
+          borderRadius: "10px",
+          border: "1px solid #ccc",
+          backgroundColor: "#000",
+        }}
+      />
 
-        <div>
+      <br />
+      <br />
 
-
-            <video
-
-                ref={videoRef}
-
-                autoPlay
-
-                muted
-
-                playsInline
-
-                width="500"
-
-                style={{
-                    borderRadius:"10px",
-                    border:"1px solid #ccc"
-                }}
-
-            />
-
-
-            <br/><br/>
-
-
-            {
-                !recording ?
-
-                <button
-                    onClick={startRecording}
-                >
-                    Start Recording
-                </button>
-
-                :
-
-                <button
-                    onClick={stopRecording}
-                >
-                    Stop & Upload
-                </button>
-
-            }
-
-
-        </div>
-
-    );
-
+      {!recording ? (
+        <button onClick={startRecording} disabled={uploading}>
+          {uploading ? "Uploading..." : "Start Recording"}
+        </button>
+      ) : (
+        <button onClick={stopRecording}>Stop & Upload</button>
+      )}
+    </div>
+  );
 }
-
 
 export default VideoRecorder;
