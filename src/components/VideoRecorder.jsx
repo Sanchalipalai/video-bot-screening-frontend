@@ -134,30 +134,19 @@ function VideoRecorder({ onUploaded, questionNumber, candidateId }) {
 
           // Send video to backend for transcription + scoring
 
-          const formData = new FormData();
-
-
-          formData.append(
-            "video",
-            blob,
-            fileName
-          );
-
-
-          formData.append(
-            "question",
-            `Question ${questionNumber + 1}`
-          );
-
-
-
-          const response = await fetch(
-            `${import.meta.env.VITE_API_URL}/api/upload-interview/${candidateId}`,
-            {
-              method: "POST",
-              body: formData,
-            }
-          );
+         const response = await fetch(
+  `${import.meta.env.VITE_API_URL}/api/upload-interview/${candidateId}`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      video_url: videoUrl,
+      question: `Question ${questionNumber + 1}`,
+    }),
+  }
+);
 
 
 
